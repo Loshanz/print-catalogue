@@ -53,9 +53,6 @@ async function loadN3d() {
     key, b => b.data, b => b.pagination?.has_next);
   return designs.map(d => ({
     id: `n3d-${d.slug}`, source: 'n3d', name: d.title, image: d.image_url || d.sprite_url || null,
-    printSeconds: d.print_time_seconds ?? null,
-    weightG: d.total_weight_grams ?? null,
-    colours: (d.filaments || []).map(f => ({ name: f.color, hex: f.hex_color })),
   }));
 }
 
