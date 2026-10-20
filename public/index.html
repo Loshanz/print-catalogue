@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Print Catalogue</title>
 <style>
-:root{color-scheme:light dark;--bg:#eef1f4;--card:#fff;--ink:#101c2a;--mute:#5d6b7a;--line:#d3dae2;--red:#d7263d;--on-red:#fff;font-family:"Avenir Next","Segoe UI",system-ui,sans-serif}
-@media (prefers-color-scheme:dark){:root{--bg:#0d141c;--card:#16202b;--ink:#eaf0f6;--mute:#93a3b4;--line:#2a3846;--red:#ff4d63;--on-red:#10141a}}
+:root{color-scheme:light dark;--bg:#eef1f4;--card:#fff;--ink:#101c2a;--mute:#5d6b7a;--line:#d3dae2;--red:#0a7f8a;--on-red:#fff;font-family:"Avenir Next","Segoe UI",system-ui,sans-serif}
+@media (prefers-color-scheme:dark){:root{--bg:#0d141c;--card:#16202b;--ink:#eaf0f6;--mute:#93a3b4;--line:#2a3846;--red:#2dd4c4;--on-red:#04211f}}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);line-height:1.45}
 .wrap{max-width:1180px;margin:0 auto;padding:0 16px}
 header{position:sticky;top:0;z-index:20;border-bottom:3px solid var(--red);background:var(--card)}
@@ -81,7 +81,7 @@ form input,form textarea{display:block;width:100%;margin-top:4px}
   <form id="f">
     <label>Name<input name="name" required maxlength="100" autocomplete="name"></label>
     <label>Email<input name="email" type="email" required maxlength="200" autocomplete="email"></label>
-    <label>Notes <small>(colour changes, shipping country, deadlines)</small><textarea name="notes" rows="3" maxlength="2000"></textarea></label>
+    <label>Notes <small>(make certain balls shiny, deadlines, etc.)</small><textarea name="notes" rows="3" maxlength="2000"></textarea></label>
     <input name="website" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
     <p class="hint" id="hint"></p>
     <button class="btn full" id="send">Send request</button>
