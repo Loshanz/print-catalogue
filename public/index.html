@@ -41,6 +41,10 @@ form label{display:block;margin-top:12px;font-weight:600;font-size:14px}form lab
 form input,form textarea{display:block;width:100%;margin-top:4px}
 .hp{position:absolute;left:-9999px}.hint{color:var(--mute);font-size:13px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+.zoom{display:block;width:100%;height:100%;padding:0;border:0;background:none;cursor:zoom-in}
+#lb{margin:auto;width:min(92vw,900px);height:auto;max-height:92vh;border-radius:16px;padding:14px;text-align:center}
+#lb img{display:block;max-width:100%;max-height:74vh;margin:12px auto 0;object-fit:contain;border-radius:10px}
+#lbx{margin:0;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -67,6 +71,10 @@ form input,form textarea{display:block;width:100%;margin-top:4px}
     <p id="msg" role="status"></p>
   </form>
 </dialog>
+<dialog id="lb" aria-label="Enlarged design image">
+  <div class="dh"><b id="lbcap"></b><button id="lbx" class="btn">Close ✕</button></div>
+  <img id="lbimg" alt="">
+</dialog>  
 <script>
 const SHOP_NAME = 'Print Catalogue';
 const SOURCE_LABELS = { cpl: 'CPL3D', n3d: 'N3D' }; // set a value to '' to hide it from customers
@@ -86,7 +94,10 @@ function card(i) {
   const act = n
     ? `<div class="step"><button data-a="dec" data-id="${id}" aria-label="Remove one">−</button><b>${n}</b><button data-a="inc" data-id="${id}" aria-label="Add one">+</button></div>`
     : `<button class="btn sm" data-a="inc" data-id="${id}">Add to request</button>`;
-  return `<article class="card" data-card="${id}"><div class="img">${i.image ? `<img loading="lazy" src="${esc(i.image)}" alt="${esc(i.name)}">` : ''}</div>
+  const pic = i.image
+    ? `<button class="zoom" data-zoom="${id}" aria-label="Enlarge ${esc(i.name)}"><img loading="lazy" src="${esc(i.image)}" alt="${esc(i.name)}"></button>`
+    : '';
+  return `<article class="card" data-card="${id}"><div class="img">${pic}</div>
     <div class="cb">${lbl}<h3>${esc(i.name)}</h3>${act}</div></article>`;
 }
 
@@ -157,6 +168,18 @@ $('#f').addEventListener('submit', async e => {
   renderCart();
 });
 
+document.addEventListener('click', e => {
+  const z = e.target.closest('[data-zoom]');
+  if (!z) return;
+  const i = byId(z.dataset.zoom);
+  if (!i) return;
+  $('#lbimg').src = i.image;
+  $('#lbimg').alt = i.name;
+  $('#lbcap').textContent = i.name;
+  $('#lb').showModal();
+});
+$('#lbx').onclick = () => $('#lb').close();
+$('#lb').addEventListener('click', e => { if (e.target === e.currentTarget) e.currentTarget.close(); });  
 (async function init() {
   document.title = $('#shop').textContent = SHOP_NAME;
   $('#hint').textContent = HINT;
