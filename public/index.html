@@ -83,14 +83,11 @@ const hm = s => { if (s == null) return ''; const m = Math.round(s / 60); return
 function card(i) {
   const n = state.cart[i.id] || 0, id = esc(i.id);
   const lbl = SOURCE_LABELS[i.source] ? `<span class="tag">${esc(SOURCE_LABELS[i.source])}</span>` : '';
-  const sw = i.colours.filter(c => /^#[0-9a-f]{3,8}$/i.test(c.hex || '')).slice(0, 8)
-    .map(c => `<i title="${esc(c.name)}" style="background:${c.hex}"></i>`).join('');
-  const facts = [hm(i.printSeconds), i.weightG != null ? Math.round(i.weightG) + ' g filament' : ''].filter(Boolean).join(', ');
   const act = n
     ? `<div class="step"><button data-a="dec" data-id="${id}" aria-label="Remove one">−</button><b>${n}</b><button data-a="inc" data-id="${id}" aria-label="Add one">+</button></div>`
     : `<button class="btn sm" data-a="inc" data-id="${id}">Add to request</button>`;
   return `<article class="card" data-card="${id}"><div class="img">${i.image ? `<img loading="lazy" src="${esc(i.image)}" alt="${esc(i.name)}">` : ''}</div>
-    <div class="cb">${lbl}<h3>${esc(i.name)}</h3><p class="meta">${esc(facts)}</p><div class="sw">${sw}</div>${act}</div></article>`;
+    <div class="cb">${lbl}<h3>${esc(i.name)}</h3>${act}</div></article>`;
 }
 
 function visible() {
