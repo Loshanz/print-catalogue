@@ -32,7 +32,7 @@ async function loadCpl() {
   const models = await pages(
     p => `https://www.cpl3d.com/api/v1/library?limit=100&page=${p}`,
     key, b => b.models, b => b.has_next);
-    // Use the leading number from the name if present, otherwise from the slug ("0143-snorlax")
+  // Use the leading number from the name if present, otherwise from the slug ("0143-snorlax")
   const withNumber = m => {
     if (/^\d/.test(m.name)) return m.name;
     const num = /^(\d+)-/.exec(m.slug || '')?.[1];
@@ -40,13 +40,9 @@ async function loadCpl() {
   };
   return models.map(m => ({
     id: `cpl-${m.id}`, source: 'cpl', name: withNumber(m), slug: m.slug, image: m.thumbnail || null,
-  return models.map(m => ({
-    id: `cpl-${m.id}`, source: 'cpl', name: m.name, image: m.thumbnail || null,
-    printSeconds: m.estimated_print_time_seconds ?? null,
-    weightG: m.total_weight_grams ?? null,
-    colours: (m.print_profiles?.[0]?.filamentColors || []).map(c => ({ name: c.name, hex: c.hex })),
   }));
 }
+
 
 // N3D: entitled=true = only designs the key owner can print
 async function loadN3d() {
