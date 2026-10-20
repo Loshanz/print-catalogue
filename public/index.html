@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Print Catalogue</title>
+<style>
+:root{color-scheme:light dark;--bg:#eef1f4;--card:#fff;--ink:#101c2a;--mute:#5d6b7a;--line:#d3dae2;--red:#d7263d;--on-red:#fff;font-family:"Avenir Next","Segoe UI",system-ui,sans-serif}
+@media (prefers-color-scheme:dark){:root{--bg:#0d141c;--card:#16202b;--ink:#eaf0f6;--mute:#93a3b4;--line:#2a3846;--red:#ff4d63;--on-red:#10141a}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);line-height:1.45}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+header{border-bottom:3px solid var(--red);background:var(--card)}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px}
+h1{margin:0;font-size:22px;font-weight:700;letter-spacing:-.01em}
+.btn{font:inherit;font-weight:600;border:0;border-radius:99px;padding:9px 16px;background:var(--red);color:var(--on-red);cursor:pointer}
+.btn.sm{padding:7px 12px;font-size:14px;margin-top:auto}.btn.full{width:100%;margin-top:12px}.btn:disabled{opacity:.45;cursor:default}
+.btn span{display:inline-block;min-width:20px;margin-left:6px;padding:0 6px;border-radius:99px;background:var(--on-red);color:var(--red);font-size:13px}
+:focus-visible{outline:3px solid var(--red);outline-offset:2px}
+.tools{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0}
+input,select,textarea{font:inherit;color:inherit;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:9px 12px}
+#q{flex:1 1 220px}.chips{display:flex;gap:6px}
+.chip{font:inherit;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:99px;padding:8px 14px;cursor:pointer}
+.chip[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.status{color:var(--mute);padding:24px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;padding-bottom:48px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;display:flex;flex-direction:column;padding:12px}
+.img{aspect-ratio:1;border-radius:50%;overflow:hidden;background:var(--line);position:relative;border:4px solid var(--card);box-shadow:0 0 0 1px var(--line)}
+.img img{width:100%;height:100%;object-fit:cover;display:block}
+.tag{display:inline-block;font-size:12px;color:var(--mute);margin-top:8px}
+.cb{display:flex;flex-direction:column;gap:6px;flex:1;padding-top:6px}
+h3{margin:0;font-size:15px}.meta{margin:0;color:var(--mute);font-size:13px}
+.sw{display:flex;gap:4px;min-height:14px;flex-wrap:wrap}.sw i{width:14px;height:14px;border-radius:50%;border:1px solid var(--line)}
+.step{display:inline-flex;align-items:center;gap:10px;margin-top:auto}
+.step button{width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:18px;cursor:pointer}
+dialog{margin:0 0 0 auto;height:100%;max-height:100%;width:min(440px,100%);border:0;background:var(--card);color:var(--ink);padding:18px;overflow:auto}
+dialog::backdrop{background:rgba(0,0,0,.5)}
+.dh{display:flex;justify-content:space-between;align-items:center}.dh h2{margin:0;font-size:19px}
+.x{border:0;background:none;color:var(--ink);font-size:20px;cursor:pointer}
+.line{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+form label{display:block;margin-top:12px;font-weight:600;font-size:14px}form label small{font-weight:400;color:var(--mute)}
+form input,form textarea{display:block;width:100%;margin-top:4px}
+.hp{position:absolute;left:-9999px}.hint{color:var(--mute);font-size:13px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header><div class="wrap bar"><h1 id="shop"></h1><button id="open" class="btn">Request list<span id="count">0</span></button></div></header>
+<main class="wrap">
+  <div class="tools">
+    <input id="q" type="search" placeholder="Search designs" aria-label="Search designs">
+    <div id="srcs" class="chips"></div>
+    <select id="sort" aria-label="Sort designs"><option value="name">Name</option><option value="time">Shortest print</option><option value="weight">Lightest</option></select>
+  </div>
+  <p id="status" class="status">Loading catalogue…</p>
+  <div id="grid" class="grid"></div>
+</main>
+<dialog id="dlg">
+  <div class="dh"><h2>Your request</h2><button id="close" class="x" aria-label="Close">✕</button></div>
+  <div id="lines"></div>
+  <form id="f">
+    <label>Name<input name="name" required maxlength="100" autocomplete="name"></label>
+    <label>Email<input name="email" type="email" required maxlength="200" autocomplete="email"></label>
+    <label>Notes <small>(colour changes, shipping country, deadlines)</small><textarea name="notes" rows="3" maxlength="2000"></textarea></label>
+    <input name="website" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+    <p class="hint" id="hint"></p>
+    <button class="btn full" id="send">Send request</button>
+    <p id="msg" role="status"></p>
+  </form>
+</dialog>
+<script>
+const SHOP_NAME = 'Print Catalogue';
+const SOURCE_LABELS = { cpl: 'CPL3D', n3d: 'N3D' }; // set a value to '' to hide it from customers
+const HINT = 'Nothing to pay now. I’ll email you a quote and a payment link, and your order ships once it’s paid.';
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const readCart = () => { try { return JSON.parse(localStorage.getItem('cart') || '{}'); } catch { return {}; } };
+const saveCart = () => { try { localStorage.setItem('cart', JSON.stringify(state.cart)); } catch {} };
+const state = { items: [], q: '', src: 'all', sort: 'name', cart: readCart() };
+const byId = id => state.items.find(i => i.id === id);
+const hm = s => { if (s == null) return ''; const m = Math.round(s / 60); return `${Math.floor(m / 60)}h ${m % 60}m`; };
+
+function card(i) {
+  const n = state.cart[i.id] || 0, id = esc(i.id);
+  const lbl = SOURCE_LABELS[i.source] ? `<span class="tag">${esc(SOURCE_LABELS[i.source])}</span>` : '';
+  const sw = i.colours.filter(c => /^#[0-9a-f]{3,8}$/i.test(c.hex || '')).slice(0, 8)
+    .map(c => `<i title="${esc(c.name)}" style="background:${c.hex}"></i>`).join('');
+  const facts = [hm(i.printSeconds), i.weightG != null ? Math.round(i.weightG) + ' g filament' : ''].filter(Boolean).join(', ');
+  const act = n
+    ? `<div class="step"><button data-a="dec" data-id="${id}" aria-label="Remove one">−</button><b>${n}</b><button data-a="inc" data-id="${id}" aria-label="Add one">+</button></div>`
+    : `<button class="btn sm" data-a="inc" data-id="${id}">Add to request</button>`;
+  return `<article class="card" data-card="${id}"><div class="img">${i.image ? `<img loading="lazy" src="${esc(i.image)}" alt="${esc(i.name)}">` : ''}</div>
+    <div class="cb">${lbl}<h3>${esc(i.name)}</h3><p class="meta">${esc(facts)}</p><div class="sw">${sw}</div>${act}</div></article>`;
+}
+
+function visible() {
+  const q = state.q.trim().toLowerCase();
+  const key = { name: i => i.name.toLowerCase(), time: i => i.printSeconds ?? Infinity, weight: i => i.weightG ?? Infinity }[state.sort];
+  return state.items
+    .filter(i => (state.src === 'all' || i.source === state.src) && (!q || i.name.toLowerCase().includes(q)))
+    .sort((a, b) => key(a) > key(b) ? 1 : key(a) < key(b) ? -1 : 0);
+}
+
+function render() {
+  const list = visible();
+  $('#grid').innerHTML = list.map(card).join('');
+  $('#status').hidden = !!list.length;
+  $('#status').textContent = state.items.length ? 'Nothing matches that search. Try a shorter name.' : 'No designs are listed right now. Please check back soon.';
+}
+
+function renderCart() {
+  const ids = Object.keys(state.cart);
+  $('#count').textContent = ids.reduce((s, id) => s + state.cart[id], 0);
+  $('#lines').innerHTML = ids.length
+    ? ids.map(id => `<div class="line"><span>${esc(byId(id).name)}</span><div class="step"><button data-a="dec" data-id="${esc(id)}" aria-label="Remove one">−</button><b>${state.cart[id]}</b><button data-a="inc" data-id="${esc(id)}" aria-label="Add one">+</button></div></div>`).join('')
+    : '<p class="status">Your list is empty. Add designs from the catalogue to request them.</p>';
+  $('#send').disabled = !ids.length;
+}
+
+function setQty(id, n) {
+  n = Math.max(0, Math.min(99, n));
+  if (n) state.cart[id] = n; else delete state.cart[id];
+  saveCart();
+  const el = document.querySelector(`[data-card="${CSS.escape(id)}"]`);
+  if (el) el.outerHTML = card(byId(id));
+  renderCart();
+}
+
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-a]');
+  if (b) setQty(b.dataset.id, (state.cart[b.dataset.id] || 0) + (b.dataset.a === 'inc' ? 1 : -1));
+});
+$('#q').addEventListener('input', e => { state.q = e.target.value; render(); });
+$('#sort').addEventListener('change', e => { state.sort = e.target.value; render(); });
+$('#srcs').addEventListener('click', e => {
+  const c = e.target.closest('[data-src]'); if (!c) return;
+  state.src = c.dataset.src;
+  document.querySelectorAll('.chip').forEach(x => x.setAttribute('aria-pressed', x === c));
+  render();
+});
+$('#open').onclick = () => $('#dlg').showModal();
+$('#close').onclick = () => $('#dlg').close();
+$('#dlg').addEventListener('click', e => { if (e.target === e.currentTarget) e.currentTarget.close(); });
+
+$('#f').addEventListener('submit', async e => {
+  e.preventDefault();
+  const f = new FormData(e.target), msg = $('#msg');
+  $('#send').disabled = true; msg.textContent = 'Sending…';
+  try {
+    const r = await fetch('/api/request', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: f.get('name'), email: f.get('email'), notes: f.get('notes'), website: f.get('website'),
+        items: Object.entries(state.cart).map(([id, qty]) => ({ id, qty })) }),
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.error || 'The request couldn’t be sent. Please try again.');
+    state.cart = {}; saveCart(); e.target.reset(); render();
+    msg.textContent = `Request ${d.ref} sent. I’ll be in touch by email soon.`;
+  } catch (err) { msg.textContent = err.message; }
+  renderCart();
+});
+
+(async function init() {
+  document.title = $('#shop').textContent = SHOP_NAME;
+  $('#hint').textContent = HINT;
+  try {
+    const r = await fetch('/api/catalogue');
+    if (!r.ok) throw 0;
+    state.items = (await r.json()).items;
+  } catch { $('#status').textContent = 'The catalogue couldn’t be loaded. Please refresh in a minute.'; return; }
+  for (const id of Object.keys(state.cart)) if (!byId(id)) delete state.cart[id];
+  const srcs = [...new Set(state.items.map(i => i.source))].filter(s => SOURCE_LABELS[s]);
+  if (srcs.length > 1) $('#srcs').innerHTML = ['all', ...srcs].map(s =>
+    `<button class="chip" data-src="${s}" aria-pressed="${s === 'all'}">${s === 'all' ? 'All' : esc(SOURCE_LABELS[s])}</button>`).join('');
+  render(); renderCart();
+})();
+</script>
+</body>
+</html>
