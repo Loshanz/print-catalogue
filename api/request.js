@@ -26,16 +26,14 @@ export default async function handler(req, res) {
   if (!lines.length) return res.status(400).json({ error: 'Those designs are no longer available. Please refresh.' });
 
   const ref = 'REQ-' + Date.now().toString(36).toUpperCase();
-  const secs = lines.reduce((s, l) => s + (l.item.printSeconds || 0) * l.qty, 0);
-  const grams = lines.reduce((s, l) => s + (l.item.weightG || 0) * l.qty, 0);
   const text = [
-    `${ref}`, `From: ${name} <${email}>`, '',
-    ...lines.map(l => `${l.qty} x ${l.item.name} [${LABEL[l.item.source]}]${l.item.printSeconds ? ` ~${hm(l.item.printSeconds)} each` : ''}`),
-    '', `Total print time: ~${hm(secs)} | Filament: ~${Math.round(grams)} g`, '', 'Notes:', notes || '(none)',
+    ref, `From: ${name} <${email}>`, '',
+    ...lines.map(l => `${l.qty} x ${l.item.name} [${LABEL[l.item.source]}]`),
+    '', 'Notes:', notes || '(none)',
   ].join('\n');
   const html = `<h2>${esc(ref)}</h2><p><b>${esc(name)}</b> &lt;${esc(email)}&gt;</p><ul>${lines.map(l =>
-    `<li>${l.qty} &times; ${esc(l.item.name)} <small>(${LABEL[l.item.source]}${l.item.printSeconds ? `, ~${hm(l.item.printSeconds)} each` : ''})</small></li>`).join('')}</ul>
-    <p>Total print time ~${hm(secs)} &middot; filament ~${Math.round(grams)} g</p><p><b>Notes</b><br>${esc(notes || '(none)').replace(/\n/g, '<br>')}</p>`;
+    `<li>${l.qty} &times; ${esc(l.item.name)} <small>(${LABEL[l.item.source]})</small></li>`).join('')}</ul>
+    <p><b>Notes</b><br>${esc(notes || '(none)').replace(/\n/g, '<br>')}</p>`;
 
   try {
     const r = await fetch('https://api.resend.com/emails', {
