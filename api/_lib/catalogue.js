@@ -33,15 +33,23 @@ async function loadCpl() {
     p => `https://www.cpl3d.com/api/v1/library?limit=100&page=${p}`,
     key, b => b.models, b => b.has_next);
   const decode = s => { try { return decodeURIComponent(s); } catch { return s; } };
-  // Find a leading number in the name, slug, first profile filename or thumbnail filename
+  const leading = s => /^\s*(\d{1,4})(?=[-\s_.])/.exec(s || '')?.[1];
+  // Manual overrides for designs that have no number anywhere in the data
+  const MANUAL_NUMBERS = {
+    // 'Eevee Poncho': '0133',
+  };
+  // Number from an image filename: at the start, or a standalone 4-digit number like -0025-
+  const fromImage = url => {
+    const file = decode((url || '').split('?')[0].split('/').pop());
+    const any = /(?<![A-Za-z0-9])([01]\d{3})(?![A-Za-z0-9])/.exec(file)?.[1];
+    return leading(file) || (any && +any <= 1100 ? any : null);
+  };
   const withNumber = m => {
     if (/^\s*\d/.test(m.name)) return m.name;
-    const candidates = [m.slug, m.print_profiles?.[0]?.name, decode((m.thumbnail || '').split('/').pop())];
-    for (const c of candidates) {
-      const num = /^\s*(\d{1,4})(?=[-\s_.])/.exec(c || '')?.[1];
-      if (num) return `${num} - ${m.name}`;
-    }
-    return m.name;
+    const num = MANUAL_NUMBERS[m.name]
+      || leading(m.slug) || leading(m.print_profiles?.[0]?.name)
+      || fromImage(m.thumbnail);
+    return num ? `${num} - ${m.name}` : m.name;
   };
   return models.map(m => ({
     id: `cpl-${m.id}`, source: 'cpl', name: withNumber(m), image: m.thumbnail || null,
