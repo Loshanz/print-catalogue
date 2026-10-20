@@ -45,11 +45,15 @@ form input,form textarea{display:block;width:100%;margin-top:4px}
 #lb{margin:auto;width:min(92vw,900px);height:auto;max-height:92vh;border-radius:16px;padding:14px;text-align:center}
 #lb img{display:block;max-width:100%;max-height:74vh;margin:12px auto 0;object-fit:contain;border-radius:10px}
 #lbx{margin:0;white-space:nowrap}
+.pricing{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--red);border-radius:12px;padding:12px 16px;margin-top:18px}
+.pricing h2{margin:0 0 4px;font-size:16px}
+.pricing p{margin:0;white-space:pre-line}
 </style>
 </head>
 <body>
 <header><div class="wrap bar"><h1 id="shop"></h1><button id="open" class="btn">Request list<span id="count">0</span></button></div></header>
 <main class="wrap">
+  <section id="pricing" class="pricing" hidden><h2>Pricing</h2><p id="pricetext"></p></section>
   <div class="tools">
     <input id="q" type="search" placeholder="Search designs" aria-label="Search designs">
     <div id="srcs" class="chips"></div>
@@ -79,6 +83,8 @@ form input,form textarea{display:block;width:100%;margin-top:4px}
 const SHOP_NAME = 'Print Catalogue';
 const SOURCE_LABELS = { cpl: 'CPL3D', n3d: 'N3D' }; // set a value to '' to hide it from customers
 const HINT = 'Nothing to pay now. I’ll email you a quote and a payment link, and your order ships once it’s paid.';
+const PRICING_TEXT = `1 Ball = €20, 3 Balls = €50, 6 balls = €100
+Shipping is always calucated based on your location!`;
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -183,6 +189,7 @@ $('#lb').addEventListener('click', e => { if (e.target === e.currentTarget) e.cu
 (async function init() {
   document.title = $('#shop').textContent = SHOP_NAME;
   $('#hint').textContent = HINT;
+  if (PRICING_TEXT.trim()) { $('#pricetext').textContent = PRICING_TEXT.trim(); $('#pricing').hidden = false; }
   try {
     const r = await fetch('/api/catalogue');
     if (!r.ok) throw 0;
